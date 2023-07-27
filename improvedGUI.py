@@ -10,6 +10,8 @@ import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtGui
 from matplotlib import cm
+from PyQt5.QtCore import Qt
+
 # -------------
 
 class DataPlotter:
@@ -19,8 +21,15 @@ class DataPlotter:
         # Setup main window/layout
         pg.setConfigOptions(imageAxisOrder='row-major')
         self.app = pg.mkQApp()
+
+        self.setupPlot()
+        
+
+    def setupPlot(self):
         self.win = pg.GraphicsLayoutWidget()
         self.win.setWindowTitle('Embedding Analysis')
+        self.win.keyPressEvent = self.keyPressEvent
+
 
         # Define Top plot (ready for iamge)
         self.topPlot = self.win.addPlot(title="")
@@ -37,6 +46,7 @@ class DataPlotter:
         # Define bottom plot 
         self.win.nextRow()
         self.bottomPlot = self.win.addPlot()
+
 
     # Change to general one day?
     def set_spec(self,image_array_spec):
@@ -64,7 +74,8 @@ class DataPlotter:
             x, y = ppos.x(), ppos.y()
             self.topPlot.setTitle("pos: (%0.1f, %0.1f)  pixel: (%d, %d)  value: %.3g" % (x, y, i, j, val))
 
-        self.img.hoverEvent = image_hover_event
+        #Disabled
+        #self.img.hoverEvent = image_hover_event
 
     def update(self):
         rgn = self.region.getRegion()
@@ -89,7 +100,10 @@ class DataPlotter:
 
 
 
-    def accept_embedding(self,embedding,rel_times):
+    def accept_embedding(self,embedding,rel_times,repeat = False):
+
+        if repeat == True:
+            self.bottomPlot.clear()
 
         self.emb = embedding
         self.rel_times = rel_times
@@ -138,21 +152,69 @@ class DataPlotter:
 
 
         # Add ROI
-        self.region = pg.LinearRegionItem(values=(0, self.rel_times[-1] / 10))
-        self.region.setZValue(10)
+        if repeat == False:
+            self.region = pg.LinearRegionItem(values=(0, self.rel_times[-1] / 10))
+            self.region.setZValue(10)
 
-        
-        self.region.sigRegionChanged.connect(self.update)
-        self.topPlot.addItem(self.region)
+            
+            self.region.sigRegionChanged.connect(self.update)
+            self.topPlot.addItem(self.region)
 
 
-        # ADD ROI2 todo
+            # ADD ROI2 todo
 
-        self.region2 = pg.LinearRegionItem(values=(0, self.rel_times[-1] / 10))
-        self.region2.setZValue(10)
-        self.region2.sigRegionChanged.connect(self.update2)
+            self.region2 = pg.LinearRegionItem(values=(0, self.rel_times[-1] / 10))
+            self.region2.setZValue(10)
+            self.region2.sigRegionChanged.connect(self.update2)
 
-        self.middlePlot.addItem(self.region2)
+            self.middlePlot.addItem(self.region2)
+
+
+        # consider where 
+
+        self.bottomPlot.setXRange(np.min(self.emb[:,0]) - 1, np.max(self.emb[:,0] + 1), padding=0)
+        self.bottomPlot.setYRange(np.min(self.emb[:,1]) - 1, np.max(self.emb[:,1] + 1), padding=0)
+
+
+    def keyPressEvent(self,evt):
+
+        key = evt.key()
+
+        # Check if the left arrow key is pressed
+        if key == Qt.Key_Left:
+            self.currentBout += -1 
+                    # Check if the left arrow key is pressed
+        if key == Qt.Key_Right:
+            self.currentBout += 1 
+
+        self.plot_file(self.currentBout,repeat = True)
+        self.topPlot.setTitle(f'Embedding Analysis for bout {self.currentBout}')
+
+
+    def accept_folder(self,path):
+        self.workingFolder = path 
+        self.currentBout = 1 #change later
+        self.plot_file(self.currentBout)
+
+
+
+    def plot_file(self,boutNum,repeat = False):
+        print('plotting bout ',boutNum)
+        filePath = f'{self.workingFolder}/bout{boutNum}.npz'
+        A = np.load(filePath)
+        rawSpk = A['rawSpk']
+        spk_emb = A['spk_emb']
+        start_times = A['start_times']
+    
+        filterSpec = A['filterSpec']
+
+        plotter.accept_image_array(rawSpk)
+        plotter.set_spec(filterSpec)
+
+        # feed it (N by 2) embedding and length N list of times associated with each point
+        plotter.accept_embedding(spk_emb,start_times,repeat = repeat)
+
+
 
     def show(self):
         self.win.show()
@@ -175,12 +237,6 @@ if __name__ == '__main__':
     # Instantiate the plotter    
     plotter = DataPlotter()
 
-    # feed it image array (numpy)
-    plotter.accept_image_array(rawSpk)
-    plotter.set_spec(filterSpec)
-
-    # feed it (N by 2) embedding and length N list of times associated with each point
-    plotter.accept_embedding(spk_emb,start_times)
-
+    plotter.accept_folder('Results2')
     # Show
     plotter.show()
