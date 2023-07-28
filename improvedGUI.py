@@ -22,10 +22,6 @@ class DataPlotter:
         pg.setConfigOptions(imageAxisOrder='row-major')
         self.app = pg.mkQApp()
 
-        self.setupPlot()
-        
-
-    def setupPlot(self):
 
         # Instantiate window
         self.win = pg.GraphicsLayoutWidget()
@@ -35,20 +31,38 @@ class DataPlotter:
 
         # Define Top plot (ready for iamge)
         self.neuroPlot = self.win.addPlot(title="")
-        self.imgNeuro = pg.ImageItem()
-        self.neuroPlot.addItem(self.imgNeuro)
-
-        self.neuroPlot.hideAxis('bottom')
-        self.neuroPlot.setLabel('left', text='Neuron #')
 
 
 
         # Define bottom plot 
         self.win.nextRow()
         self.behavePlot = self.win.addPlot()
+
+
+        # Define bottom plot 
+        self.win.nextRow()
+        self.embPlot = self.win.addPlot()
+
+        self.setupPlot()
+        
+
+    def setupPlot(self):
+
+        self.imgNeuro = pg.ImageItem()
+        self.neuroPlot.addItem(self.imgNeuro)
+
+        self.neuroPlot.hideAxis('bottom')
+        self.neuroPlot.setLabel('left', text='Neuron #')
+
+        # Add scale Line
+
+        
+
+
         self.imgBehave = pg.ImageItem()
         self.behavePlot.addItem(self.imgBehave)
         self.behavePlot.setLabel('bottom', text='Time (S)')
+        self.behavePlot.setLabel('left', text='Freq (not to scale)')
         #self.behavePlot.hideAxis('left')
 
 
@@ -57,12 +71,13 @@ class DataPlotter:
 
 
 
-        # Define bottom plot 
-        self.win.nextRow()
-        self.embPlot = self.win.addPlot()
         self.embPlot.hideAxis('left')
         self.embPlot.hideAxis('bottom')
 
+    def clear_plots(self):
+        self.neuroPlot.clear()
+        self.embPlot.clear()
+        self.behavePlot.clear()
 
 
     # Change to general one day?
@@ -93,6 +108,18 @@ class DataPlotter:
 
         #Disabled
         #self.img.hoverEvent = image_hover_event
+
+        # Add a finite line segment in bold red
+        #windowSec - self.startEndTimes[0,0]
+
+        # for displaying the slices
+        SE = self.startEndTimes
+        print(SE.shape)
+        #line_item = pg.PlotDataItem(x=SE[0,:], y=0*SE[0,:], pen=pg.mkPen('r', width=1), symbol='o', symbolPen='r', symbolBrush='r', size= 5,connect=False)
+        line_item = pg.PlotDataItem(x=[SE[0,1],SE[1,1]], y=[0,0],pen=pg.mkPen('r', width=1))
+        self.neuroPlot.addItem(line_item)
+
+        print('Plotted X as ', [SE[0,1],SE[1,1]])
 
     def update(self):
         rgn = self.region.getRegion()
@@ -219,7 +246,7 @@ class DataPlotter:
         settingsLetter = self.letterArr[self.currentLetterInd]
 
         try:
-            self.plot_file(repeat = True)
+            self.plot_file(repeat = False)
 
             TD = dict(zip(self.param_arr[0,:], self.param_arr[1,:])) 
             RF = TD['roundingFactor']
@@ -229,7 +256,7 @@ class DataPlotter:
             TAO = TD['time_const']
             Bird = TD['Bird']
 
-            self.paramText = f'Rounding = {RF}, Window = {WS}, SS = {SS}, metric = {M}, Tao = {TAO}'
+            self.paramText = f'Rounding Factor = {RF},  Window Pixels = {WS},  Step Pixels = {SS},  Distance Metric = {M},  Smoothing Tao = {TAO}'
 
             self.neuroPlot.setTitle(f'{Bird} Bout: {self.currentBout}{settingsLetter} with params: {self.paramText}')
 
@@ -238,6 +265,9 @@ class DataPlotter:
         except:
             self.currentBout = oldBoutVal
             self.currentLetterInd = oldLetterVal 
+            self.plot_file(repeat = False)
+            #FIX....
+
 
     def accept_folder(self,path):
         self.workingFolder = path 
@@ -251,11 +281,14 @@ class DataPlotter:
 
     def plot_file(self,repeat = False):
 
+        self.clear_plots()
+        self.setupPlot()
+
         settingsLetter = self.letterArr[self.currentLetterInd]
         filePath = f'{self.workingFolder}/{self.currentBout}{settingsLetter}.npz'
         A = np.load(filePath)
 
-        
+        self.startEndTimes = A['embStartEnd']
         plotter.set_neural_image(A['neuroArr'])
         plotter.set_behavioral_image(A['behavioralArr'])
 
@@ -278,7 +311,7 @@ if __name__ == '__main__':
     plotter = DataPlotter()
 
     # Accept folder of data
-    plotter.accept_folder('SortedResults/Pk106-Jul28')
+    plotter.accept_folder('SortedResults/Pk146-Jul28')
 
     # Show
     plotter.show()
