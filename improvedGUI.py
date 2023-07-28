@@ -26,44 +26,61 @@ class DataPlotter:
         
 
     def setupPlot(self):
+
+        # Instantiate window
         self.win = pg.GraphicsLayoutWidget()
         self.win.setWindowTitle('Embedding Analysis')
         self.win.keyPressEvent = self.keyPressEvent
 
 
         # Define Top plot (ready for iamge)
-        self.topPlot = self.win.addPlot(title="")
-        self.img = pg.ImageItem()
-        self.topPlot.addItem(self.img)
+        self.neuroPlot = self.win.addPlot(title="")
+        self.imgNeuro = pg.ImageItem()
+        self.neuroPlot.addItem(self.imgNeuro)
+
+        self.neuroPlot.hideAxis('bottom')
+        self.neuroPlot.setLabel('left', text='Neuron #')
+
+
 
         # Define bottom plot 
         self.win.nextRow()
-        self.middlePlot = self.win.addPlot()
-        self.imgSpec = pg.ImageItem()
-        self.middlePlot.addItem(self.imgSpec)
+        self.behavePlot = self.win.addPlot()
+        self.imgBehave = pg.ImageItem()
+        self.behavePlot.addItem(self.imgBehave)
+        self.behavePlot.setLabel('left', text='Time (S)')
+        #self.behavePlot.hideAxis('left')
+
+
+        # Optional X-Link
+        self.behavePlot.setXLink(self.neuroPlot)                                                                     
+
 
 
         # Define bottom plot 
         self.win.nextRow()
-        self.bottomPlot = self.win.addPlot()
+        self.embPlot = self.win.addPlot()
+        self.embPlot.hideAxis('left')
+        self.embPlot.hideAxis('bottom')
+
 
 
     # Change to general one day?
-    def set_spec(self,image_array_spec):
+    def set_behavioral_image(self,image_array):
 
-        self.image_array_spec = image_array_spec
-        self.imgSpec.setImage(image_array_spec)
+        self.behave_array = image_array
+        self.imgBehave.setImage(self.behave_array)
         
 
-    def accept_image_array(self,image_array):
+    def set_neural_image(self,image_array):
         
-        self.image_array = image_array
-        self.img.setImage(image_array)
+        self.neural_array = image_array
+        self.imgNeuro.setImage(self.neural_array)
         
 
         def image_hover_event(event):
             if event.isExit():
-                self.topPlot.setTitle("")
+                self.neuroPlot.setTitle("")
                 return
             pos = event.pos()
             i, j = pos.y(), pos.x()
@@ -72,21 +89,22 @@ class DataPlotter:
             val = self.image_array[i, j]
             ppos = self.img.mapToParent(pos)
             x, y = ppos.x(), ppos.y()
-            self.topPlot.setTitle("pos: (%0.1f, %0.1f)  pixel: (%d, %d)  value: %.3g" % (x, y, i, j, val))
+            self.neuroPlot.setTitle("pos: (%0.1f, %0.1f)  pixel: (%d, %d)  value: %.3g" % (x, y, i, j, val))
 
         #Disabled
         #self.img.hoverEvent = image_hover_event
 
     def update(self):
         rgn = self.region.getRegion()
-        findIndices = np.where(np.logical_and(self.rel_times > rgn[0], self.rel_times < rgn[1]))[0]
+
+        findIndices = np.where(np.logical_and(self.startEndTimes[0,:] > rgn[0], self.startEndTimes[1,:] < rgn[1]))[0]
     
         self.newScatter.setData(pos = self.emb[findIndices,:])
 
 
 
-        self.bottomPlot.setXRange(np.min(self.emb[:,0]) - 1, np.max(self.emb[:,0] + 1), padding=0)
-        self.bottomPlot.setYRange(np.min(self.emb[:,1]) - 1, np.max(self.emb[:,1] + 1), padding=0)
+        self.embPlot.setXRange(np.min(self.emb[:,0]) - 1, np.max(self.emb[:,0] + 1), padding=0)
+        self.embPlot.setYRange(np.min(self.emb[:,1]) - 1, np.max(self.emb[:,1] + 1), padding=0)
 
         self.region2.setRegion(rgn)
 
@@ -100,13 +118,15 @@ class DataPlotter:
 
 
 
-    def accept_embedding(self,embedding,rel_times,repeat = False):
+    def accept_embedding(self,embedding,startEndTimes,repeat = False):
 
         if repeat == True:
-            self.bottomPlot.clear()
+            self.embPlot.clear()
 
         self.emb = embedding
-        self.rel_times = rel_times
+        self.startEndTimes = startEndTimes
+        print('shape')
+        print(startEndTimes.shape)  
 
 
         self.cmap = cm.get_cmap('hsv')
@@ -115,70 +135,73 @@ class DataPlotter:
         print(colors)
         self.defaultColors = colors.copy()
         self.scatter = pg.ScatterPlotItem(pos=embedding, size=5, brush=colors)
-        self.bottomPlot.addItem(self.scatter)
+        self.embPlot.addItem(self.scatter)
         
         self.newScatter = pg.ScatterPlotItem(pos=embedding[0:10,:], size=10, brush=pg.mkBrush(255, 255, 255, 200))
-        self.bottomPlot.addItem(self.newScatter)
+        self.embPlot.addItem(self.newScatter)
 
-        # Scale img 
-        height,width = self.image_array.shape
+        # Scale imgNeuro 
+        height,width = self.neural_array.shape
 
-        x_start, x_end, y_start, y_end = 0, rel_times[-1], 0, height
+        x_start, x_end, y_start, y_end = 0, self.startEndTimes[1,-1], 0, height
         pos = [x_start, y_start]
         scale = [float(x_end - x_start) / width, float(y_end - y_start) / height]
 
-        self.img.setPos(*pos)
+        self.imgNeuro.setPos(*pos)
         tr = QtGui.QTransform()
-        self.img.setTransform(tr.scale(scale[0], scale[1]))
-        self.topPlot.getViewBox().setLimits(yMin=y_start, yMax=y_end)
-        self.topPlot.getViewBox().setLimits(xMin=x_start, xMax=x_end)
+        self.imgNeuro.setTransform(tr.scale(scale[0], scale[1]))
+        self.neuroPlot.getViewBox().setLimits(yMin=y_start, yMax=y_end)
+        self.neuroPlot.getViewBox().setLimits(xMin=x_start, xMax=x_end)
 
 
         # SCALE IMG 2 todo: functionalize
 
-        # Scale img 
-        height,width = self.image_array_spec.shape
+        # Scale imgBehave 
+        height,width = self.behave_array.shape
 
-        x_start, x_end, y_start, y_end = 0, rel_times[-1], 0, height
+        x_start, x_end, y_start, y_end = 0, self.startEndTimes[1,-1], 0, height
         pos = [x_start, y_start]
         scale = [float(x_end - x_start) / width, float(y_end - y_start) / height]
 
-        self.imgSpec.setPos(*pos)
+        self.imgBehave.setPos(*pos)
         tr = QtGui.QTransform()
-        self.imgSpec.setTransform(tr.scale(scale[0], scale[1]))
-        self.middlePlot.getViewBox().setLimits(yMin=y_start, yMax=y_end)
-        self.middlePlot.getViewBox().setLimits(xMin=x_start, xMax=x_end)
+        self.imgBehave.setTransform(tr.scale(scale[0], scale[1]))
+        self.behavePlot.getViewBox().setLimits(yMin=y_start, yMax=y_end)
+        self.behavePlot.getViewBox().setLimits(xMin=x_start, xMax=x_end)
 
 
 
         # Add ROI
         if repeat == False:
-            self.region = pg.LinearRegionItem(values=(0, self.rel_times[-1] / 10))
+            self.region = pg.LinearRegionItem(values=(0, self.startEndTimes[0,-1] / 10))
             self.region.setZValue(10)
 
             
             self.region.sigRegionChanged.connect(self.update)
-            self.topPlot.addItem(self.region)
+            self.neuroPlot.addItem(self.region)
 
 
             # ADD ROI2 todo
 
-            self.region2 = pg.LinearRegionItem(values=(0, self.rel_times[-1] / 10))
+            self.region2 = pg.LinearRegionItem(values=(0, self.startEndTimes[0,-1] / 10))
             self.region2.setZValue(10)
             self.region2.sigRegionChanged.connect(self.update2)
 
-            self.middlePlot.addItem(self.region2)
+            self.behavePlot.addItem(self.region2)
 
 
         # consider where 
 
-        self.bottomPlot.setXRange(np.min(self.emb[:,0]) - 1, np.max(self.emb[:,0] + 1), padding=0)
-        self.bottomPlot.setYRange(np.min(self.emb[:,1]) - 1, np.max(self.emb[:,1] + 1), padding=0)
+        self.embPlot.setXRange(np.min(self.emb[:,0]) - 1, np.max(self.emb[:,0] + 1), padding=0)
+        self.embPlot.setYRange(np.min(self.emb[:,1]) - 1, np.max(self.emb[:,1] + 1), padding=0)
 
 
     def keyPressEvent(self,evt):
 
         key = evt.key()
+        oldBoutVal = self.currentBout
+        oldLetterVal = self.currentLetterInd
+
 
         # Check if the left arrow key is pressed
         if key == Qt.Key_Left:
@@ -187,32 +210,59 @@ class DataPlotter:
         if key == Qt.Key_Right:
             self.currentBout += 1 
 
-        self.plot_file(self.currentBout,repeat = True)
-        self.topPlot.setTitle(f'Embedding Analysis for bout {self.currentBout}')
+        if key == Qt.Key_Down:
+            self.currentLetterInd += -1 
+                    # Check if the left arrow key is pressed
+        if key == Qt.Key_Up:
+            self.currentLetterInd += 1 
 
+        settingsLetter = self.letterArr[self.currentLetterInd]
+
+        try:
+            self.plot_file(repeat = True)
+
+            TD = dict(zip(self.param_arr[0,:], self.param_arr[1,:])) 
+            RF = TD['roundingFactor']
+            WS = TD['window_size']
+            SS = TD['step_size']
+            M = TD['metric']
+            TAO = TD['time_const']
+            Bird = TD['Bird']
+
+            self.paramText = f'Rounding = {RF}, Window = {WS}, SS = {SS}, metric = {M}, Tao = {TAO}'
+
+            self.neuroPlot.setTitle(f'{Bird} Bout: {self.currentBout}{settingsLetter} with params: {self.paramText}')
+
+
+
+        except:
+            self.currentBout = oldBoutVal
+            self.currentLetterInd = oldLetterVal 
 
     def accept_folder(self,path):
         self.workingFolder = path 
-        self.currentBout = 1 #change later
-        self.plot_file(self.currentBout)
+        self.currentBout = 1
+        self.currentLetterInd = 0 
+        self.letterArr = ['A','B','C','D']
+        self.currentLetter = self.letterArr[self.currentLetterInd]
+        self.plot_file()
 
 
 
-    def plot_file(self,boutNum,repeat = False):
-        print('plotting bout ',boutNum)
-        filePath = f'{self.workingFolder}/bout{boutNum}.npz'
+    def plot_file(self,repeat = False):
+
+        settingsLetter = self.letterArr[self.currentLetterInd]
+        filePath = f'{self.workingFolder}/{self.currentBout}{settingsLetter}.npz'
         A = np.load(filePath)
-        rawSpk = A['rawSpk']
-        spk_emb = A['spk_emb']
-        start_times = A['start_times']
-    
-        filterSpec = A['filterSpec']
 
-        plotter.accept_image_array(rawSpk)
-        plotter.set_spec(filterSpec)
+        
+        plotter.set_neural_image(A['neuroArr'])
+        plotter.set_behavioral_image(A['behavioralArr'])
 
         # feed it (N by 2) embedding and length N list of times associated with each point
-        plotter.accept_embedding(spk_emb,start_times,repeat = repeat)
+        plotter.accept_embedding(A['embVals'],A['embStartEnd'],repeat = repeat)
+
+        self.param_arr = A['paramArr']
 
 
 
@@ -224,19 +274,11 @@ class DataPlotter:
 # IDEA (iterate through bouts..)
 if __name__ == '__main__':
 
-    # Load your data
-    file_path = 'working.npz'
-    A = np.load(file_path)
-    rawSpk = A['rawSpk']
-    spk_emb = A['spk_emb']
-    start_times = A['start_times']
-    
-    filterSpec = A['filterSpec']
-
-
     # Instantiate the plotter    
     plotter = DataPlotter()
 
-    plotter.accept_folder('Results2')
+    # Accept folder of data
+    plotter.accept_folder('SortedResults/B119-Jul28')
+
     # Show
     plotter.show()
