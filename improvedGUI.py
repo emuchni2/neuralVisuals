@@ -48,7 +48,7 @@ class DataPlotter:
         self.behavePlot = self.win.addPlot()
         self.imgBehave = pg.ImageItem()
         self.behavePlot.addItem(self.imgBehave)
-        self.behavePlot.setLabel('left', text='Time (S)')
+        self.behavePlot.setLabel('bottom', text='Time (S)')
         #self.behavePlot.hideAxis('left')
 
 
@@ -278,7 +278,7 @@ if __name__ == '__main__':
     plotter = DataPlotter()
 
     # Accept folder of data
-    plotter.accept_folder('SortedResults/B119-Jul28')
+    plotter.accept_folder('SortedResults/Pk106-Jul28')
 
     # Show
     plotter.show()
