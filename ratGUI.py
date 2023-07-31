@@ -61,8 +61,10 @@ class DataPlotter:
 
         self.imgBehave = pg.ImageItem()
         self.behavePlot.addItem(self.imgBehave)
-        self.behavePlot.setLabel('bottom', text='Time (S)')
-        self.behavePlot.setLabel('left', text='Freq (not to scale)')
+        self.behavePlot.setLabel('bottom', text='Time Index')
+        self.behavePlot.setLabel('left', text='Behavioral (no units)')
+
+        self.behavePlot.setTitle('Behavioral Data (Top-Heat, Bottom-Pinching)')
         #self.behavePlot.hideAxis('left')
 
 
@@ -251,9 +253,7 @@ class DataPlotter:
             binSize = TD['bin_size']
             animal = TD['Animal']
 
-            self.paramText = f'Rounding Factor = {RF},  Window Pixels = {WS},  Step Pixels = {SS},  Distance Metric = {M},  Smoothing Tao = {TAO}'
-
-            self.neuroPlot.setTitle(f'Rat: {animal} Bout: with bin Size {binSize}')
+            self.neuroPlot.setTitle(f'Rat: {animal} with bin Size {binSize}')
 
 
 
@@ -271,6 +271,14 @@ class DataPlotter:
         self.letterArr = ['A','B','C','D']
         self.currentLetter = self.letterArr[self.currentLetterInd]
         self.plot_file()
+
+        TD = dict(zip(self.param_arr[0,:], self.param_arr[1,:])) 
+        binSize = TD['bin_size']
+        animal = TD['Animal']
+
+        self.neuroPlot.setTitle(f'Rat: {animal} with bin Size {binSize}')
+
+
 
 
 
