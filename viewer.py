@@ -57,18 +57,30 @@ class DataPlotter:
 
     def addFile(self,inputFile,location):
 
-        rgb_array  = self.loadWav(inputFile)
+        rgb_array, freqs, t = self.loadWav(inputFile)
         if location == 'top':
-            self.topImg.setImage(rgb_array)
+            relevantPlot = self.topImg
 
         if location == 'bottom':
-            self.bottomImg.setImage(rgb_array)
+            relevantPlot = self.bottomImg
 
+        relevantPlot.setImage(rgb_array)
 
+        height,width = rgb_array.shape[0:2]
+
+        x_start, x_end, y_start, y_end = t[0], t[-1], freqs[0]/1000, freqs[-1]/1000
+        pos = [x_start, y_start]
+        scale = [float(x_end - x_start) / width, float(y_end - y_start) / height]
+
+        relevantPlot.setPos(*pos)
+        tr = QtGui.QTransform()
+        relevantPlot.setTransform(tr.scale(scale[0], scale[1]))
+        relevantPlot.getViewBox().setLimits(yMin=y_start, yMax=y_end)
+        #relevantPlot.getViewBox().setLimits(xMin=x_start, xMax=x_end)
         # Do transformations
-        standardYshape  = 10
-        self.topImg.getViewBox().setLimits(yMin=0, yMax=100)
-        self.topImg.getViewBox().setLimits(yMin=0, yMax=100)
+        # standardYshape  = 10
+        self.topImg.getViewBox().setLimits(yMin=y_start, yMax=y_end)
+        # self.topImg.getViewBox().setLimits(yMin=0, yMax=100)
 
 
     def clear_plots(self):
@@ -113,7 +125,7 @@ class DataPlotter:
       # Apply the colormap to the normalized array
       rgb_array = plt.cm.get_cmap(colormap)(normalized_array)
 
-      return rgb_array
+      return rgb_array, freqs, t
 
     def show(self):
         self.win.show()
