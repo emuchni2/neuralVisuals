@@ -54,6 +54,80 @@ class DataPlotter:
 
         self.bottomImg = pg.ImageItem()
         self.bottomPlot.addItem(self.bottomImg)
+        
+
+        self.view_box1 = self.topImg.getViewBox()
+        self.view_box2 = self.bottomImg.getViewBox()
+
+    def twoToOne(self):
+
+
+
+      xRange1 = self.view_box1.viewRange()[0]
+      xRange2 = self.view_box2.viewRange()[0]
+
+      if np.abs(self.currentScale - (xRange2[-1] - xRange2[0])) < .1:
+        print('Done')
+        return
+      else:
+        self.currentScale= xRange1[-1] - xRange1[0]
+
+      yRange1 = self.view_box1.viewRange()[1]
+      yRange2 = self.view_box2.viewRange()[1]
+
+      scale1 = xRange1[-1] - xRange1[0]
+      scale2 = xRange2[-1] - xRange2[0]
+
+      center1 = (xRange1[-1] + xRange1[0])/2
+      center2 = (xRange2[-1] + xRange2[0])/2
+
+      # print(self.view_box1.viewRange())
+      # Adjust the X-axis scale of the other viewbox based on the target viewbox
+      # source_viewbox = self.sender()
+      minIn = center1 - scale2/2
+      maxIn = center1 + scale2/2
+    
+      self.view_box1.setXRange(minIn,maxIn, padding=0)
+
+    def oneToTwo(self):
+
+
+
+      xRange1 = self.view_box1.viewRange()[0]
+      xRange2 = self.view_box2.viewRange()[0]
+
+      if np.abs(self.currentScale - (xRange1[-1] - xRange1[0])) < .1:
+        print('Done')
+        return
+      else:
+        self.currentScale= xRange1[-1] - xRange1[0]
+
+      yRange1 = self.view_box1.viewRange()[1]
+      yRange2 = self.view_box2.viewRange()[1]
+
+      scale1 = xRange1[-1] - xRange1[0]
+      scale2 = xRange2[-1] - xRange2[0]
+
+      center1 = (xRange1[-1] + xRange1[0])/2
+      center2 = (xRange2[-1] + xRange2[0])/2
+
+      # print(self.view_box1.viewRange())
+      # Adjust the X-axis scale of the other viewbox based on the target viewbox
+      # source_viewbox = self.sender()
+      minIn = center2 - scale1/2
+      maxIn = center2 + scale1/2
+    
+      self.view_box2.setXRange(minIn,maxIn, padding=0)
+
+
+
+    def startLink(self):  
+      # Link only the X-axis scale manually
+      self.view_box1.sigXRangeChanged.connect(self.oneToTwo)
+      self.view_box2.sigXRangeChanged.connect(self.twoToOne)
+
+      self.currentScale = self.view_box1.viewRange()[0][1] - self.view_box1.viewRange()[0][0]
+
 
     def addFile(self,inputFile,location):
 
@@ -138,7 +212,7 @@ if __name__ == '__main__':
     # Instantiate the plotter    
     plotter = DataPlotter()
     plotter.setupPlot()
-    plotter.addFile('Demo_Wav/USA5207_45107.22309894_6_30_6_11_49.wav','top')
-    plotter.addFile('Demo_Wav/USA5207_45107.22652648_6_30_6_17_32.wav','bottom')
-
+    plotter.addFile('/Users/ethanmuchnik/Desktop/specViewer/Demo_Wav/USA5207_45107.22309894_6_30_6_11_49.wav','top')
+    plotter.addFile('/Users/ethanmuchnik/Desktop/specViewer/Demo_Wav/USA5207_45107.22652648_6_30_6_17_32.wav','bottom')
+    plotter.startLink()
     plotter.show()
