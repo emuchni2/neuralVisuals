@@ -70,7 +70,9 @@ plotter.show()
 ## **Plotting Techniques/Ideas**
 
 Pixelated UMAP 
-![image](https://github.com/emuchni2/neuralVisuals/assets/85625059/91a05a0d-c717-48be-b42b-f2fda3467e9f)
+
+<img src="https://github.com/emuchni2/neuralVisuals/assets/85625059/91a05a0d-c717-48be-b42b-f2fda3467e9f" alt="Neural Embedding Scroller" width="400" height="400">
+
 
 ## **Contact**
 - Ethan Muchnik (Gardner Lab)
