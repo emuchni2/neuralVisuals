@@ -46,6 +46,14 @@ plotter.show()
 
 **Dependencies:**: matplotlib, pyqtgraph, PyQt5, numpy
 
+**Inputs:**
+
+npz file with:
+
+- 'embVals' : N by 2 array of x,y values for low dimensional embedding
+- 'embStartEnd' : 2 by N array of start,end times for each of the N slices
+- 'behavioralArr': Np array of spectrogram (must be representative of the time bounded by the first start and last end of embStartEnd)
+
 <img src="https://github.com/emuchni2/neuralVisuals/assets/85625059/4cd190a7-2a69-44f6-98d3-722ef7b6bd22" alt="Neural Embedding Scroller" width="600" height="400">
 
 ```python
@@ -58,6 +66,12 @@ plotter.addROI()
 # Show
 plotter.show()
 ```
+
+## **Plotting Techniques/Ideas**
+
+Pixelated UMAP 
+![image](https://github.com/emuchni2/neuralVisuals/assets/85625059/91a05a0d-c717-48be-b42b-f2fda3467e9f)
+
 ## **Contact**
 - Ethan Muchnik (Gardner Lab)
 - ethan.k.muchnik@gmail.com
