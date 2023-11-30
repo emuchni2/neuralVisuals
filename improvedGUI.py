@@ -311,7 +311,7 @@ if __name__ == '__main__':
     plotter = DataPlotter()
 
     # Accept folder of data
-    plotter.accept_folder('SortedResults/Pk146-Jul28')
+    plotter.accept_folder('/Users/ethanmuchnik/Desktop/Series_GUI/SortedResults/Pk146-Jul28')
 
     # Show
     plotter.show()

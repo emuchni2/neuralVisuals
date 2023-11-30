@@ -178,18 +178,18 @@ class DataPlotter:
       samplerate, data = wavfile.read(inputFile)
       FS = samplerate # input
       NFFT = 512
-      noverlap = 450  # noverlap > NFFT/2
+      noverlap = 460  # noverlap > NFFT/2
 
       # Create Spectrogram
       spectrum, freqs, t, im = plt.specgram(data, NFFT=NFFT, Fs=FS, noverlap=noverlap,cmap='jet')
 
       # Manual Params (can be changed)
       logThresh = 10
-      afterThresh = 4
+      # afterThresh = 4
 
       # Take log then delete elements below another thresh after log
       filterSpec = np.log(spectrum + logThresh)
-      filterSpec[np.where(filterSpec < afterThresh)] = 0
+      # filterSpec[np.where(filterSpec < afterThresh)] = 0
 
       colormap = 'jet'
 
