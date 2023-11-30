@@ -1,4 +1,4 @@
-# neuralVisuals
+# Visualization Tools
 
 Python based visualization tools for low dimensional embeddings of spectral and neural data 
 
@@ -42,5 +42,22 @@ plotter.show()
 
 
 
+## **Audio Embedding Selection Tool**
+
+**Dependencies:**: matplotlib, pyqtgraph, PyQt5, numpy
+
+<img src="https://github.com/emuchni2/neuralVisuals/assets/85625059/4cd190a7-2a69-44f6-98d3-722ef7b6bd22" alt="Neural Embedding Scroller" width="600" height="400">
+
+```python
+app = QApplication([])
+# Instantiate the plotter    
+plotter = DataPlotter()
+# Accept file of data
+plotter.plot_file('/Users/ethanmuchnik/Downloads/demoCanaryLarge3.npz')
+plotter.addROI()
+# Show
+plotter.show()
+```
+## **Contact**
 - Ethan Muchnik (Gardner Lab)
 - ethan.k.muchnik@gmail.com
